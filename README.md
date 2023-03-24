@@ -22,3 +22,4 @@ python3 -m http.server
 
 - https://developer.mozilla.org/en-US/docs/WebAssembly/Rust_to_wasm
 - https://rustwasm.github.io/wasm-bindgen/examples/websockets.html
+- https://github.com/3Hren/msgpack-rust

@@ -21,13 +21,19 @@ pub fn register(endpoint: &str, message: &str, callback: &js_sys::Function) -> R
     // create callback
     let cloned_ws = ws.clone();
     let callback = callback.clone();
+
     let onmessage_callback = Closure::<dyn FnMut(_)>::new(move |e: MessageEvent| {
-        // Handle difference Text/Binary,...
-        if let Ok(txt) = e.data().dyn_into::<js_sys::JsString>() {
-            // console_log!("message event, received Text: {:?}", txt);
+        if let Ok(abuf) = e.data().dyn_into::<js_sys::ArrayBuffer>() {
+            let array = js_sys::Uint8Array::new(&abuf);
+            let buf = array.to_vec();
+            let decoded_message: &str = rmp_serde::from_slice(&buf).unwrap();
 
             callback
-                .call2(&JsValue::null(), &JsValue::null(), &txt)
+                .call2(
+                    &JsValue::null(),
+                    &JsValue::null(), // error-first
+                    &JsValue::from_str(decoded_message),
+                )
                 .unwrap();
         } else {
             console_log!("message event, received Unknown: {:?}", e.data());
@@ -48,11 +54,11 @@ pub fn register(endpoint: &str, message: &str, callback: &js_sys::Function) -> R
     ws.set_onerror(Some(onerror_callback.as_ref().unchecked_ref()));
     onerror_callback.forget();
 
+    let buf = rmp_serde::to_vec(&message).unwrap();
     let cloned_ws = ws.clone();
-    let message = String::from(message);
     let onopen_callback = Closure::<dyn FnMut()>::new(move || {
         // console_log!("socket opened");
-        match cloned_ws.send_with_str(message.as_str()) {
+        match cloned_ws.send_with_u8_array(&buf) {
             Ok(_) => {
                 // console_log!("message successfully sent")
             }
