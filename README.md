@@ -7,6 +7,12 @@ $ cargo install wasm-pack
 $ wasm-pack build --target web
 ```
 
+Start nodejs websocket server for testing
+
+```
+$ node examples/ws-server/index.js
+```
+
 Then serve the statics and navigate to `host:port`
 
 ```
